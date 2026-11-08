@@ -1,0 +1,35 @@
+# Virtual Environments
+.venv/
+venv/
+env/
+ENV/
+
+# Python cache & build
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+build/
+dist/
+*.egg-info/
+
+# Pytest & Coverage
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Local Environment Variables (secrets)
+.env
+.env.local
+.env.*.local
+
+# IDE & Editor artifacts
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS artifacts
+Thumbs.db
+Desktop.ini
+.DS_Store
