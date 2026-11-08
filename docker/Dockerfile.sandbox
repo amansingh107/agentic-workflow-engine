@@ -1,0 +1,12 @@
+# Minimal hardened Python sandbox environment
+FROM python:3.12-alpine
+
+# Create unprivileged sandbox user
+RUN addgroup -S sandboxgroup && adduser -S sandboxuser -G sandboxgroup
+
+WORKDIR /workspace
+RUN chown sandboxuser:sandboxgroup /workspace
+
+USER sandboxuser
+
+CMD ["python3", "-c", "print('Secure Sandbox Initialized')"]

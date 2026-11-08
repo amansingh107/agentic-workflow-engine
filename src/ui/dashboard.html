@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Autonomous Agentic Workflow Engine</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <style>
+    @keyframes pulse-ring {
+      0% { transform: scale(.95); opacity: 0.8; }
+      50% { transform: scale(1.05); opacity: 0.4; }
+      100% { transform: scale(.95); opacity: 0.8; }
+    }
+    .pulse-glow { animation: pulse-ring 2s infinite ease-in-out; }
+  </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col font-sans">
+
+  <!-- Top Navigation -->
+  <header class="border-b border-slate-800 bg-slate-900/80 backdrop-blur px-6 py-4 flex items-center justify-between sticky top-0 z-50">
+    <div class="flex items-center space-x-3">
+      <div class="h-9 w-9 rounded-lg bg-indigo-600 flex items-center justify-center text-white shadow-lg shadow-indigo-500/30">
+        <i class="fa-solid fa-network-wired text-lg"></i>
+      </div>
+      <div>
+        <h1 class="text-lg font-bold tracking-tight text-white">Agentic Workflow Engine</h1>
+        <p class="text-xs text-slate-400">LangGraph &bull; Docker Sandbox &bull; PostgreSQL &bull; Redis</p>
+      </div>
+    </div>
+    <div class="flex items-center space-x-4 text-xs font-medium">
+      <span id="backend-status" class="px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center gap-1.5">
+        <span class="h-2 w-2 rounded-full bg-emerald-400 animate-pulse"></span>
+        API Online
+      </span>
+      <a href="/docs" target="_blank" class="text-slate-400 hover:text-slate-200 transition">
+        <i class="fa-solid fa-book mr-1"></i> Swagger Docs
+      </a>
+    </div>
+  </header>
+
+  <!-- Main Content Layout -->
+  <main class="flex-1 max-w-7xl w-full mx-auto p-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+    <!-- Left Column: Workflow Submission & Graph State (5 cols) -->
+    <div class="lg:col-span-5 space-y-6">
+
+      <!-- Launch Task Card -->
+      <div class="bg-slate-900 border border-slate-800 rounded-xl p-5 shadow-sm">
+        <h2 class="text-sm font-semibold uppercase tracking-wider text-slate-400 mb-3 flex items-center gap-2">
+          <i class="fa-solid fa-play text-indigo-400"></i> Start Agentic Task
+        </h2>
+        <div class="space-y-3">
+          <div>
+            <label class="block text-xs font-medium text-slate-300 mb-1">Task Specification</label>
+            <textarea id="task-input" rows="3" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-100 placeholder-slate-500" placeholder="e.g. Load an array of customer transactions, calculate mean and standard deviation, and detect anomalies."></textarea>
+          </div>
+          <div class="flex items-center justify-between">
+            <div class="flex items-center space-x-2">
+              <label class="text-xs text-slate-400">Max Iterations:</label>
+              <select id="max-iterations" class="bg-slate-950 border border-slate-700 rounded px-2 py-1 text-xs text-slate-200 focus:outline-none">
+                <option value="2">2 Retries</option>
+                <option value="3" selected>3 Retries</option>
+                <option value="5">5 Retries</option>
+              </select>
+            </div>
+            <button id="btn-start" onclick="startWorkflow()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-sm font-semibold shadow-md shadow-indigo-600/20 transition flex items-center gap-2">
+              <span>Execute Workflow</span>
+              <i class="fa-solid fa-arrow-right text-xs"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Graph Nodes Visualizer -->
+      <div class="bg-slate-900 border border-slate-800 rounded-xl p-5">
+        <h2 class="text-sm font-semibold uppercase tracking-wider text-slate-400 mb-4 flex items-center gap-2">
+          <i class="fa-solid fa-diagram-project text-indigo-400"></i> LangGraph Cyclic Pipeline
+        </h2>
+        
+        <div class="space-y-3">
+          <!-- Step 1: Planner -->
+          <div id="node-planner" class="flex items-center justify-between p-3 rounded-lg border border-slate-800 bg-slate-950/60 transition">
+            <div class="flex items-center space-x-3">
+              <div class="h-8 w-8 rounded-full bg-slate-800 flex items-center justify-center text-slate-400 text-sm">1</div>
+              <div>
+                <p class="text-sm font-medium text-slate-200">Planner Agent</p>
+                <p class="text-xs text-slate-500">Deconstructs task into sub-goals</p>
+              </div>
+            </div>
+            <span class="node-badge text-xs px-2 py-0.5 rounded bg-slate-800 text-slate-400">Idle</span>
+          </div>
+
+          <!-- Step 2: Coder -->
+          <div id="node-coder" class="flex items-center justify-between p-3 rounded-lg border border-slate-800 bg-slate-950/60 transition">
+            <div class="flex items-center space-x-3">
+              <div class="h-8 w-8 rounded-full bg-slate-800 flex items-center justify-center text-slate-400 text-sm">2</div>
+              <div>
+                <p class="text-sm font-medium text-slate-200">Coder Agent</p>
+                <p class="text-xs text-slate-500">Synthesizes executable Python code</p>
+              </div>
+            </div>
+            <span class="node-badge text-xs px-2 py-0.5 rounded bg-slate-800 text-slate-400">Idle</span>
+          </div>
+
+          <!-- Step 3: Guardrail & HITL -->
+          <div id="node-guardrail" class="flex items-center justify-between p-3 rounded-lg border border-slate-800 bg-slate-950/60 transition">
+            <div class="flex items-center space-x-3">
+              <div class="h-8 w-8 rounded-full bg-slate-800 flex items-center justify-center text-slate-400 text-sm">3</div>
+              <div>
+                <p class="text-sm font-medium text-slate-200">Guardrail & HITL Gate</p>
+                <p class="text-xs text-slate-500">AST Security check & interrupt gate</p>
+              </div>
+            </div>
+            <span class="node-badge text-xs px-2 py-0.5 rounded bg-slate-800 text-slate-400">Idle</span>
+          </div>
+
+          <!-- Step 4: Docker Sandbox -->
+          <div id="node-sandbox" class="flex items-center justify-between p-3 rounded-lg border border-slate-800 bg-slate-950/60 transition">
+            <div class="flex items-center space-x-3">
+              <div class="h-8 w-8 rounded-full bg-slate-800 flex items-center justify-center text-slate-400 text-sm">4</div>
+              <div>
+                <p class="text-sm font-medium text-slate-200">Docker Sandbox</p>
+                <p class="text-xs text-slate-500">256MB RAM &bull; 0.5 CPU &bull; 30s timeout</p>
+              </div>
+            </div>
+            <span class="node-badge text-xs px-2 py-0.5 rounded bg-slate-800 text-slate-400">Idle</span>
+          </div>
+
+          <!-- Step 5: Critic & Self-Healing -->
+          <div id="node-critic" class="flex items-center justify-between p-3 rounded-lg border border-slate-800 bg-slate-950/60 transition">
+            <div class="flex items-center space-x-3">
+              <div class="h-8 w-8 rounded-full bg-slate-800 flex items-center justify-center text-slate-400 text-sm">5</div>
+              <div>
+                <p class="text-sm font-medium text-slate-200">Critic / Evaluator</p>
+                <p class="text-xs text-slate-500">Inspects stdout/errors; triggers cycle if needed</p>
+              </div>
+            </div>
+            <span class="node-badge text-xs px-2 py-0.5 rounded bg-slate-800 text-slate-400">Idle</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Persistence & Thread Info -->
+      <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 text-xs text-slate-400 space-y-2">
+        <div class="flex justify-between">
+          <span>Active Thread ID:</span>
+          <span id="active-thread-id" class="font-mono text-slate-200">None</span>
+        </div>
+        <div class="flex justify-between">
+          <span>PostgreSQL Checkpoint Status:</span>
+          <span id="checkpoint-status" class="text-indigo-400">Synced</span>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Right Column: Code, Output, HITL Gate & Stream (7 cols) -->
+    <div class="lg:col-span-7 space-y-6">
+
+      <!-- Human-in-the-Loop Interruption Alert (Hidden by default) -->
+      <div id="hitl-banner" class="hidden bg-amber-950/60 border-2 border-amber-500/80 rounded-xl p-5 shadow-xl shadow-amber-950/50">
+        <div class="flex items-start space-x-3">
+          <div class="h-10 w-10 rounded-full bg-amber-500/20 text-amber-400 flex items-center justify-center flex-shrink-0 text-lg">
+            <i class="fa-solid fa-triangle-exclamation"></i>
+          </div>
+          <div class="flex-1">
+            <h3 class="text-base font-bold text-amber-300">Human-in-the-Loop Approval Required</h3>
+            <p id="hitl-message" class="text-xs text-amber-200/90 mt-1">High-risk operation or system call detected. Workflow paused and state saved to PostgreSQL.</p>
+            
+            <div id="hitl-reasons" class="mt-2 space-y-1 text-xs text-amber-100 bg-amber-900/40 p-2.5 rounded border border-amber-800/60"></div>
+
+            <div class="mt-4">
+              <label class="block text-xs font-semibold text-slate-300 mb-1">Inspect & Edit Code before Sandbox Execution:</label>
+              <textarea id="hitl-code-edit" rows="5" class="w-full bg-slate-950 border border-amber-700/60 rounded p-2.5 font-mono text-xs text-emerald-400 focus:outline-none"></textarea>
+            </div>
+
+            <div class="mt-4 flex items-center space-x-3">
+              <button onclick="submitApproval(true)" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-bold transition flex items-center gap-1.5 shadow">
+                <i class="fa-solid fa-check"></i> Approve & Execute
+              </button>
+              <button onclick="submitApproval(false)" class="px-4 py-2 bg-rose-700 hover:bg-rose-600 text-white rounded-lg text-xs font-bold transition flex items-center gap-1.5 shadow">
+                <i class="fa-solid fa-xmark"></i> Reject & Loop Back
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Generated Code Box -->
+      <div class="bg-slate-900 border border-slate-800 rounded-xl p-5">
+        <div class="flex items-center justify-between mb-3">
+          <h2 class="text-sm font-semibold uppercase tracking-wider text-slate-400 flex items-center gap-2">
+            <i class="fa-solid fa-code text-indigo-400"></i> Synthesized Code
+          </h2>
+          <span id="code-status-badge" class="text-xs px-2 py-0.5 rounded bg-slate-800 text-slate-400">No code yet</span>
+        </div>
+        <pre class="bg-slate-950 border border-slate-800 rounded-lg p-4 font-mono text-xs text-emerald-400 overflow-x-auto min-h-[140px] max-h-[220px]"><code id="code-display"># Generated Python script will appear here during execution...</code></pre>
+      </div>
+
+      <!-- Execution Console / Sandbox Output -->
+      <div class="bg-slate-900 border border-slate-800 rounded-xl p-5">
+        <div class="flex items-center justify-between mb-3">
+          <h2 class="text-sm font-semibold uppercase tracking-wider text-slate-400 flex items-center gap-2">
+            <i class="fa-solid fa-terminal text-indigo-400"></i> Sandbox Telemetry & Stdout
+          </h2>
+          <div id="telemetry-badges" class="flex gap-2"></div>
+        </div>
+        <pre id="console-output" class="bg-slate-950 border border-slate-800 rounded-lg p-4 font-mono text-xs text-slate-300 overflow-x-auto min-h-[160px] max-h-[260px] whitespace-pre-wrap">Awaiting task initiation...</pre>
+      </div>
+
+    </div>
+
+  </main>
+
+  <script>
+    let currentThreadId = null;
+    let pollInterval = null;
+
+    async function startWorkflow() {
+      const task = document.getElementById("task-input").value.trim();
+      const maxIters = parseInt(document.getElementById("max-iterations").value);
+      if (!task) {
+        alert("Please enter a task description.");
+        return;
+      }
+
+      resetUI();
+      document.getElementById("console-output").innerText = "Initiating multi-agent state graph...\n";
+
+      try {
+        const res = await fetch("/api/v1/workflows", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ task: task, max_iterations: maxIters })
+        });
+        const data = await res.json();
+        currentThreadId = data.thread_id;
+        document.getElementById("active-thread-id").innerText = currentThreadId;
+
+        // Start polling workflow status
+        startPolling();
+      } catch (err) {
+        document.getElementById("console-output").innerText = `Failed to start workflow: ${err}`;
+      }
+    }
+
+    function resetUI() {
+      document.getElementById("hitl-banner").classList.add("hidden");
+      document.getElementById("code-display").innerText = "# Synthesizing solution...";
+      document.querySelectorAll(".node-badge").forEach(b => {
+        b.className = "node-badge text-xs px-2 py-0.5 rounded bg-slate-800 text-slate-400";
+        b.innerText = "Idle";
+      });
+      document.getElementById("telemetry-badges").innerHTML = "";
+    }
+
+    function startPolling() {
+      if (pollInterval) clearInterval(pollInterval);
+      pollInterval = setInterval(async () => {
+        if (!currentThreadId) return;
+        try {
+          const res = await fetch(`/api/v1/workflows/${currentThreadId}`);
+          if (!res.ok) return;
+          const data = await res.json();
+          updateDashboard(data);
+        } catch (e) {
+          console.error(e);
+        }
+      }, 1000);
+    }
+
+    function updateDashboard(data) {
+      if (data.code) {
+        document.getElementById("code-display").innerText = data.code;
+        document.getElementById("code-status-badge").innerText = "Generated";
+        document.getElementById("code-status-badge").className = "text-xs px-2 py-0.5 rounded bg-indigo-500/20 text-indigo-300";
+      }
+
+      // Check HITL Interrupt
+      if (data.is_paused && data.approval_payload) {
+        document.getElementById("hitl-banner").classList.remove("hidden");
+        document.getElementById("hitl-code-edit").value = data.code || "";
+        
+        const reasons = data.approval_payload.risk_reasons || [];
+        const reasonsHtml = reasons.map(r => `<div>&bull; ${r}</div>`).join("");
+        document.getElementById("hitl-reasons").innerHTML = `<strong>Detected Concerns (Risk: ${data.approval_payload.risk_score}):</strong>${reasonsHtml}`;
+
+        updateNodeBadge("node-guardrail", "Awaiting Approval", "bg-amber-500/20 text-amber-300 animate-pulse");
+        document.getElementById("console-output").innerText = `[PAUSED] Workflow suspended at Approval Gate.\nState saved in PostgreSQL checkpoint under thread ${currentThreadId}.\nAwaiting user approval...`;
+        return;
+      } else {
+        document.getElementById("hitl-banner").classList.add("hidden");
+      }
+
+      // Output & Telemetry
+      if (data.execution_result) {
+        const er = data.execution_result;
+        let out = "";
+        if (er.stdout) out += `--- STDOUT ---\n${er.stdout}\n`;
+        if (er.stderr) out += `--- STDERR ---\n${er.stderr}\n`;
+        document.getElementById("console-output").innerText = out || "Execution completed with no output.";
+
+        let badgeHtml = `<span class="text-xs px-2 py-0.5 rounded ${er.is_success ? 'bg-emerald-500/20 text-emerald-300' : 'bg-rose-500/20 text-rose-300'}">${er.is_success ? 'Success (Exit 0)' : 'Failed (Exit ' + er.exit_code + ')'}</span>`;
+        badgeHtml += `<span class="text-xs px-2 py-0.5 rounded bg-slate-800 text-slate-300"><i class="fa-regular fa-clock"></i> ${er.execution_time_seconds}s</span>`;
+        document.getElementById("telemetry-badges").innerHTML = badgeHtml;
+      }
+
+      // Terminal node state
+      if (data.status === "completed") {
+        updateNodeBadge("node-critic", "Completed", "bg-emerald-500/20 text-emerald-300");
+        clearInterval(pollInterval);
+      } else if (data.status === "failed") {
+        updateNodeBadge("node-critic", "Failed", "bg-rose-500/20 text-rose-300");
+        clearInterval(pollInterval);
+      }
+    }
+
+    function updateNodeBadge(nodeId, text, className) {
+      const node = document.getElementById(nodeId);
+      if (node) {
+        const badge = node.querySelector(".node-badge");
+        if (badge) {
+          badge.className = `node-badge text-xs px-2 py-0.5 rounded ${className}`;
+          badge.innerText = text;
+        }
+      }
+    }
+
+    async function submitApproval(approved) {
+      if (!currentThreadId) return;
+      const modifiedCode = document.getElementById("hitl-code-edit").value;
+
+      try {
+        await fetch(`/api/v1/workflows/${currentThreadId}/resume`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            approved: approved,
+            modified_code: modifiedCode,
+            feedback: approved ? null : "Code rejected by operator."
+          })
+        });
+        document.getElementById("hitl-banner").classList.add("hidden");
+        document.getElementById("console-output").innerText += "\n[RESUMED] User response submitted. Resuming workflow from PostgreSQL checkpoint...";
+      } catch (e) {
+        alert("Failed to submit approval: " + e);
+      }
+    }
+  </script>
+</body>
+</html>
